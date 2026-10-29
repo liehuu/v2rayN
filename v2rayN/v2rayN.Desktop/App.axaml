@@ -76,12 +76,12 @@
                             Command="{Binding RoutingBypassMainlandCmd}"
                             Header="{x:Static resx:ResUI.menuRoutingBypassMainland}"
                             IsChecked="{Binding BlRoutingBypassMainland}"
-                            ToggleType="Radio" />
+                            ToggleType="CheckBox" />
                         <NativeMenuItem
                             Command="{Binding RoutingGlobalCmd}"
                             Header="{x:Static resx:ResUI.menuRoutingGlobal}"
                             IsChecked="{Binding BlRoutingGlobal}"
-                            ToggleType="Radio" />
+                            ToggleType="CheckBox" />
                         <NativeMenuItemSeparator />
                         <NativeMenuItem Click="MenuAddServerViaClipboardClick" Header="{x:Static resx:ResUI.menuAddServerViaClipboard}" />
                         <NativeMenuItem Command="{Binding SubUpdateCmd}" Header="{x:Static resx:ResUI.menuSubUpdate}" />
