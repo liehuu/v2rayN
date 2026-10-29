@@ -24,23 +24,16 @@
                 HorizontalAlignment="Left" />
         </StackPanel>
 
-        <StackPanel Grid.IsSharedSizeScope="True">
+        <StackPanel>
             <Border
                 Margin="{StaticResource Margin4}"
                 VerticalAlignment="Center"
                 Theme="{DynamicResource CardBorder}">
 
-                <Grid Margin="{StaticResource Margin4}" RowDefinitions="Auto,Auto,Auto,Auto">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition
-                            Width="Auto"
-                            MinWidth="300"
-                            SharedSizeGroup="BackupLabel" />
-                        <ColumnDefinition
-                            Width="Auto"
-                            MinWidth="200"
-                            SharedSizeGroup="BackupButton" />
-                    </Grid.ColumnDefinitions>
+                <Grid
+                    Margin="{StaticResource Margin4}"
+                    ColumnDefinitions="300,200"
+                    RowDefinitions="Auto,Auto,Auto,Auto">
                     <TextBlock
                         Grid.Row="0"
                         Grid.Column="0"
@@ -86,17 +79,10 @@
                 Margin="{StaticResource Margin4}"
                 VerticalAlignment="Center"
                 Theme="{DynamicResource CardBorder}">
-                <Grid Margin="{StaticResource Margin4}" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition
-                            Width="Auto"
-                            MinWidth="300"
-                            SharedSizeGroup="BackupLabel" />
-                        <ColumnDefinition
-                            Width="Auto"
-                            MinWidth="200"
-                            SharedSizeGroup="BackupButton" />
-                    </Grid.ColumnDefinitions>
+                <Grid
+                    Margin="{StaticResource Margin4}"
+                    ColumnDefinitions="300,200"
+                    RowDefinitions="Auto,Auto,Auto,Auto,Auto">
                     <StackPanel
                         Grid.Row="0"
                         Grid.Column="0"

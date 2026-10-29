@@ -67,16 +67,12 @@ public partial class CoreConfigV2rayService
 
                 var address = _config.TunModeItem.IPv4Address.NullIfEmpty() ?? Global.TunIPv4Address.First();
                 tunInbound.settings.gateway = [address];
-                // Without ::/0, IPv6 bypasses the tunnel. Skip it only when the host has no global IPv6
-                // address and EnableIPv6Address is off; NAT66 hosts have only ULA addresses.
-                var routeIPv6 = _config.TunModeItem.EnableIPv6Address || context.HasGlobalIPv6Address;
-                tunInbound.settings.autoSystemRoutingTable = routeIPv6
-                    ? ["0.0.0.0/0", "::/0"]
-                    : ["0.0.0.0/0"];
+                tunInbound.settings.autoSystemRoutingTable = ["0.0.0.0/0"];
                 if (_config.TunModeItem.EnableIPv6Address == true)
                 {
                     var address6 = _config.TunModeItem.IPv6Address.NullIfEmpty() ?? Global.TunIPv6Address.First();
                     tunInbound.settings.gateway.Add(address6);
+                    tunInbound.settings.autoSystemRoutingTable.Add("::/0");
                 }
 
                 var bindInterface = _config.CoreBasicItem.BindInterface?.TrimEx();
@@ -85,17 +81,7 @@ public partial class CoreConfigV2rayService
                     tunInbound.settings.autoOutboundsInterface = bindInterface;
                 }
                 tunInbound.sniffing = inbound.sniffing;
-                // tunInbound.sniffing.routeOnly = inbound.sniffing.routeOnly;
-                tunInbound.sniffing.routeOnly = true;
-
-                if (context.IsWindows && _config.TunModeItem.StrictRoute == true)
-                {
-                    tunInbound.settings.autoSystemWfpBlockLeak = ["dns", "misconfigtun"];
-                }
-                if (context.IsLinux)
-                {
-                    tunInbound.settings.autoSystemDnsToGateway = true;
-                }
+                tunInbound.sniffing.routeOnly = inbound.sniffing.routeOnly;
 
                 if (_config.TunModeItem.RouteExcludeAddress is { Count: > 0 })
                 {
@@ -106,9 +92,7 @@ public partial class CoreConfigV2rayService
                         .Where(x => x != null).ToList();
 
                     var includeList = new List<IPNetwork2> { wholeInternet };
-                    var includeListV6 = routeIPv6
-                        ? new List<IPNetwork2> { wholeInternetV6 }
-                        : new List<IPNetwork2>();
+                    var includeListV6 = new List<IPNetwork2> { wholeInternetV6 };
 
                     foreach (var exclude in excludeList)
                     {
@@ -134,8 +118,15 @@ public partial class CoreConfigV2rayService
                     includeList = IPNetwork2.Supernet(includeList.ToArray()).ToList();
                     includeListV6 = IPNetwork2.Supernet(includeListV6.ToArray()).ToList();
 
-                    tunInbound.settings.autoSystemRoutingTable = includeList.Select(x => x.ToString())
-                        .Concat(includeListV6.Select(x => x.ToString())).ToList();
+                    if (_config.TunModeItem.EnableIPv6Address)
+                    {
+                        tunInbound.settings.autoSystemRoutingTable = includeList.Select(x => x.ToString())
+                            .Concat(includeListV6.Select(x => x.ToString())).ToList();
+                    }
+                    else
+                    {
+                        tunInbound.settings.autoSystemRoutingTable = includeList.Select(x => x.ToString()).ToList();
+                    }
                 }
 
                 _coreConfig.inbounds.Add(tunInbound);

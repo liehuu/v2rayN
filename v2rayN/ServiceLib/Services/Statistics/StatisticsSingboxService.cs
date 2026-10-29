@@ -5,7 +5,8 @@ namespace ServiceLib.Services.Statistics;
 public class StatisticsSingboxService
 {
     private readonly Config _config;
-    private CancellationTokenSource? _cts;
+    private bool _exitFlag;
+    private ClientWebSocket? webSocket;
     private readonly Func<ServerSpeedItem, Task>? _updateFunc;
     private string Url => $"ws://{Global.Loopback}:{AppManager.Instance.StatePort2}/traffic";
     private static readonly string _tag = "StatisticsSingboxService";
@@ -14,17 +15,36 @@ public class StatisticsSingboxService
     {
         _config = config;
         _updateFunc = updateFunc;
+        _exitFlag = false;
 
-        Task.Run(Run);
+        _ = Task.Run(Run);
+    }
+
+    private async Task Init()
+    {
+        await Task.Delay(5000);
+
+        try
+        {
+            if (webSocket == null)
+            {
+                webSocket = new ClientWebSocket();
+                await webSocket.ConnectAsync(new Uri(Url), CancellationToken.None);
+            }
+        }
+        catch { }
     }
 
     public void Close()
     {
         try
         {
-            _cts?.Cancel();
-            _cts?.Dispose();
-            _cts = null;
+            _exitFlag = true;
+            if (webSocket != null)
+            {
+                webSocket.Abort();
+                webSocket = null;
+            }
         }
         catch (Exception ex)
         {
@@ -34,63 +54,53 @@ public class StatisticsSingboxService
 
     private async Task Run()
     {
-        Close();
-        _cts = new CancellationTokenSource();
-        var token = _cts.Token;
+        await Init();
 
-        while (!token.IsCancellationRequested)
+        while (!_exitFlag)
         {
+            await Task.Delay(1000);
             try
             {
                 if (!AppManager.Instance.IsRunningCore(ECoreType.sing_box))
                 {
-                    await Task.Delay(1000, token).ConfigureAwait(false);
                     continue;
                 }
-                using var ws = new ClientWebSocket();
-                await ws.ConnectAsync(new Uri(Url), token).ConfigureAwait(false);
-
-                var buffer = new byte[1024];
-                while (ws.State == WebSocketState.Open
-                    && !token.IsCancellationRequested)
+                if (webSocket != null)
                 {
-                    var res = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), token);
-                    if (res.MessageType == WebSocketMessageType.Close)
+                    if (webSocket.State is WebSocketState.Aborted or WebSocketState.Closed)
                     {
-                        break;
-                    }
-                    using var ms = new MemoryStream();
-                    ms.Write(buffer, 0, res.Count);
-                    while (!res.EndOfMessage)
-                    {
-                        res = await ws.ReceiveAsync(new ArraySegment<byte>(buffer), token).ConfigureAwait(false);
-                        ms.Write(buffer, 0, res.Count);
+                        webSocket.Abort();
+                        webSocket = null;
+                        await Init();
+                        continue;
                     }
 
-                    var result = Encoding.UTF8.GetString(ms.ToArray());
-                    if (!result.IsNotEmpty())
+                    if (webSocket.State != WebSocketState.Open)
                     {
                         continue;
                     }
-                    ParseOutput(result, out var up, out var down);
 
-                    if (_updateFunc != null)
+                    var buffer = new byte[1024];
+                    var res = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                    while (!res.CloseStatus.HasValue)
                     {
-                        await _updateFunc.Invoke(new ServerSpeedItem
+                        var result = Encoding.UTF8.GetString(buffer, 0, res.Count);
+                        if (result.IsNotEmpty())
                         {
-                            ProxyUp = (long)(up / 1000),
-                            ProxyDown = (long)(down / 1000),
-                        }).ConfigureAwait(false);
+                            ParseOutput(result, out var up, out var down);
+
+                            await _updateFunc?.Invoke(new ServerSpeedItem()
+                            {
+                                ProxyUp = (long)(up / 1000),
+                                ProxyDown = (long)(down / 1000)
+                            });
+                        }
+                        res = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                     }
                 }
             }
-            catch (OperationCanceledException) when (token.IsCancellationRequested)
-            {
-                break;
-            }
             catch
             {
-                await Task.Delay(3000, token).ConfigureAwait(false);
             }
         }
     }

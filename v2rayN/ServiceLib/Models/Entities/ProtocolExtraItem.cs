@@ -27,7 +27,6 @@ public record ProtocolExtraItem
     public string? WgInterfaceAddress { get; init; }
     public string? WgReserved { get; init; }
     public int? WgMtu { get; init; }
-    public string? WgDns { get; init; }
 
     // hysteria2
     public string? SalamanderPass { get; init; }
@@ -45,10 +44,6 @@ public record ProtocolExtraItem
     // naiveproxy
     public int? InsecureConcurrency { get; init; }
     public bool? NaiveQuic { get; init; }
-
-    // MASQUE
-    public string? MasquePath { get; init; }
-    public string? MasqueHeaders { get; init; }
 
     // group profile
     public string? GroupType { get; init; }

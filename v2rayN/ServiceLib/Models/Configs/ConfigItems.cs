@@ -209,11 +209,12 @@ public class HysteriaItem
 [Serializable]
 public class ClashUIItem
 {
+    public ERuleMode RuleMode { get; set; }
     public bool EnableIPv6 { get; set; }
     public bool EnableMixinContent { get; set; }
     public int ProxiesSorting { get; set; }
     public bool ProxiesAutoRefresh { get; set; }
-    public int ProxiesRefreshInterval { get; set; } = 2;
+    public int ProxiesAutoDelayTestInterval { get; set; } = 10;
     public bool ConnectionsAutoRefresh { get; set; }
     public int ConnectionsRefreshInterval { get; set; } = 2;
     public List<ColumnItem> ConnectionsColumnItem { get; set; }
@@ -242,9 +243,8 @@ public class WebDavItem
 [Serializable]
 public class CheckUpdateItem
 {
-    public bool UpdateViaProxy { get; set; } = true;
+    public bool CheckPreReleaseUpdate { get; set; }
     public List<string>? SelectedCoreTypes { get; set; }
-    public List<string>? CheckPreReleaseCoreTypes { get; set; }
 }
 
 [Serializable]
@@ -279,7 +279,6 @@ public class SimpleDNSItem
     public bool? GlobalFakeIp { get; set; }
     public string? FakeIPRange { get; set; }
     public bool? BlockBindingQuery { get; set; }
-    public bool? BlockAAAAQuery { get; set; }
     public string? DirectDNS { get; set; }
     public string? RemoteDNS { get; set; }
     public string? BootstrapDNS { get; set; }

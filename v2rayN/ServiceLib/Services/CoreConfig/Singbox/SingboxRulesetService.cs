@@ -79,7 +79,6 @@ public partial class CoreConfigSingboxService
 
         //Add ruleset srs
         _coreConfig.route.rule_set = [];
-        var containRemoteRuleset = false;
         foreach (var item in new HashSet<string>(ruleSets))
         {
             if (item.IsNullOrEmpty())
@@ -95,13 +94,11 @@ public partial class CoreConfigSingboxService
                         type = "local",
                         format = "binary",
                         tag = item,
-                        path = pathSrs,
+                        path = pathSrs
                     };
                 }
                 else
                 {
-                    containRemoteRuleset = true;
-
                     var srsUrl = string.IsNullOrEmpty(_config.ConstItem.SrsSourceUrl)
                         ? Global.SingboxRulesetUrl
                         : _config.ConstItem.SrsSourceUrl;
@@ -112,21 +109,11 @@ public partial class CoreConfigSingboxService
                         format = "binary",
                         tag = item,
                         url = string.Format(srsUrl, item.StartsWith(geosite) ? geosite : geoip, item),
-                        http_client = Global.SingboxSrsDownloadHttpClientTag,
+                        download_detour = Global.ProxyTag
                     };
                 }
             }
             _coreConfig.route.rule_set.Add(customRuleset);
-        }
-
-        if (containRemoteRuleset)
-        {
-            _coreConfig.http_clients ??= [];
-            _coreConfig.http_clients.Add(new()
-            {
-                tag = Global.SingboxSrsDownloadHttpClientTag,
-                detour = Global.ProxyTag,
-            });
         }
     }
 }

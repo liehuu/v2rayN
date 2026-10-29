@@ -75,28 +75,15 @@ public sealed class SQLiteHelper
 
     public async Task DisposeDbConnectionAsync()
     {
-        await Task.Run(() =>
+        await Task.Factory.StartNew(() =>
         {
-            try
-            {
-                _db?.Close();
-                _db?.Dispose();
-            }
-            finally
-            {
-                _db = null;
-            }
+            _db?.Close();
+            _db?.Dispose();
+            _db = null;
 
-            try
-            {
-                var conn = _dbAsync?.GetConnection();
-                conn?.Close();
-                conn?.Dispose();
-            }
-            finally
-            {
-                _dbAsync = null;
-            }
+            _dbAsync?.GetConnection()?.Close();
+            _dbAsync?.GetConnection()?.Dispose();
+            _dbAsync = null;
         });
     }
 }

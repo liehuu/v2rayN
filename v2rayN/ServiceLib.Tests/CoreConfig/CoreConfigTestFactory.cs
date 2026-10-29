@@ -1,3 +1,8 @@
+using System.Reflection;
+using ServiceLib.Enums;
+using ServiceLib.Manager;
+using ServiceLib.Models;
+
 namespace ServiceLib.Tests.CoreConfig;
 
 internal static class CoreConfigTestFactory
@@ -200,8 +205,7 @@ internal static class CoreConfigTestFactory
         return node;
     }
 
-    public static CoreConfigContext CreateContext(Config config, ProfileItem node, ECoreType runCoreType,
-        bool hasGlobalIPv6Address = true)
+    public static CoreConfigContext CreateContext(Config config, ProfileItem node, ECoreType runCoreType)
     {
         return new CoreConfigContext
         {
@@ -222,7 +226,6 @@ internal static class CoreConfigTestFactory
             FullConfigTemplate = null,
             IsTunEnabled = config.TunModeItem.EnableTun,
             ProtectDomainList = [],
-            HasGlobalIPv6Address = hasGlobalIPv6Address,
         };
     }
 
@@ -246,14 +249,6 @@ internal static class CoreConfigTestFactory
         var config = CreateConfig(coreType);
         config.TunModeItem.EnableTun = true;
         config.TunModeItem.RouteExcludeAddress = ["10.0.0.1/32", "192.168.1.0/24", "fc00::/7"];
-        return config;
-    }
-
-    public static Config CreateConfigWithTun(ECoreType coreType, bool enableIPv6Address)
-    {
-        var config = CreateConfig(coreType);
-        config.TunModeItem.EnableTun = true;
-        config.TunModeItem.EnableIPv6Address = enableIPv6Address;
         return config;
     }
 }

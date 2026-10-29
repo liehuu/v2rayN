@@ -23,17 +23,17 @@
             Orientation="Horizontal">
             <Button
                 x:Name="btnReset"
-                MinWidth="100"
+                Width="100"
                 Margin="{StaticResource MarginLr8}"
                 Content="{x:Static resx:ResUI.TbReset}" />
             <Button
                 x:Name="btnSave"
-                MinWidth="100"
+                Width="100"
                 Content="{x:Static resx:ResUI.TbConfirm}"
                 IsDefault="True" />
             <Button
                 x:Name="btnCancel"
-                MinWidth="100"
+                Width="100"
                 Margin="{StaticResource MarginLr8}"
                 Content="{x:Static resx:ResUI.TbCancel}"
                 IsCancel="True" />

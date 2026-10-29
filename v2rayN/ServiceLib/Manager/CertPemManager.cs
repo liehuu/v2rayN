@@ -28,13 +28,14 @@ public class CertPemManager
     ///     Get certificate in PEM format from a server with CA pinning validation
     /// </summary>
     public async Task<(string?, string?)> GetCertPemAsync(string target, string serverName,
-        List<string>? verifyPeerCertByName = null)
+        List<string>? verifyPeerCertByName = null, int timeout = 4)
     {
         try
         {
             var (domain, _, port, _) = Utils.ParseUrl(target);
 
-            using var cts = new CancellationTokenSource(Global.LocalFetch);
+            using var cts = new CancellationTokenSource();
+            cts.CancelAfter(TimeSpan.FromSeconds(timeout));
 
             using var client = new TcpClient();
             await client.ConnectAsync(domain, port > 0 ? port : 443, cts.Token);
@@ -62,8 +63,8 @@ public class CertPemManager
         }
         catch (OperationCanceledException)
         {
-            Logging.SaveLog(_tag, new TimeoutException($"Connection timeout after {Global.LocalFetch.TotalSeconds} seconds"));
-            return (null, $"Connection timeout after {Global.LocalFetch.TotalSeconds} seconds");
+            Logging.SaveLog(_tag, new TimeoutException($"Connection timeout after {timeout} seconds"));
+            return (null, $"Connection timeout after {timeout} seconds");
         }
         catch (Exception ex)
         {
@@ -76,14 +77,15 @@ public class CertPemManager
     ///     Get certificate chain in PEM format from a server with CA pinning validation
     /// </summary>
     public async Task<(List<string>, string?)> GetCertChainPemAsync(string target, string serverName,
-        List<string>? verifyPeerCertByName = null)
+        List<string>? verifyPeerCertByName = null, int timeout = 4)
     {
         var pemList = new List<string>();
         try
         {
             var (domain, _, port, _) = Utils.ParseUrl(target);
 
-            using var cts = new CancellationTokenSource(Global.LocalFetch);
+            using var cts = new CancellationTokenSource();
+            cts.CancelAfter(TimeSpan.FromSeconds(timeout));
 
             using var client = new TcpClient();
             await client.ConnectAsync(domain, port > 0 ? port : 443, cts.Token);
@@ -114,8 +116,8 @@ public class CertPemManager
         }
         catch (OperationCanceledException)
         {
-            Logging.SaveLog(_tag, new TimeoutException($"Connection timeout after {Global.LocalFetch.TotalSeconds} seconds"));
-            return (pemList, $"Connection timeout after {Global.LocalFetch.TotalSeconds} seconds");
+            Logging.SaveLog(_tag, new TimeoutException($"Connection timeout after {timeout} seconds"));
+            return (pemList, $"Connection timeout after {timeout} seconds");
         }
         catch (Exception ex)
         {
@@ -277,37 +279,6 @@ public class CertPemManager
         {
             return string.Empty;
         }
-    }
-
-    public static string GetLeafCertSha256Thumbprint(string pemCertChain, bool includeColon = false)
-    {
-        var certs = ParsePemChain(pemCertChain);
-        if (certs.Count == 0)
-        {
-            return string.Empty;
-        }
-        foreach (var certStr in certs)
-        {
-            try
-            {
-                var cert = X509Certificate2.CreateFromPem(certStr);
-                var extension = cert.Extensions
-                    .OfType<X509BasicConstraintsExtension>()
-                    .FirstOrDefault();
-                var isCa = extension?.CertificateAuthority == true;
-                if (isCa)
-                {
-                    continue;
-                }
-                var thumbprint = cert.GetCertHashString(HashAlgorithmName.SHA256);
-                return includeColon ? string.Join(":", thumbprint.Chunk(2).Select(c => new string(c))) : thumbprint;
-            }
-            catch
-            {
-                // Ignore
-            }
-        }
-        return string.Empty;
     }
 
     private static readonly Lazy<X509Certificate2Collection> _chromeRootCerts = new(() =>

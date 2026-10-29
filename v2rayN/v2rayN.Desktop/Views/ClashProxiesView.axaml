@@ -32,11 +32,9 @@
                 x:Name="cmbRulemode"
                 Width="100"
                 Margin="{StaticResource MarginLr8}">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate x:DataType="x:String">
-                        <TextBlock Text="{Binding}" />
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
+                <ComboBoxItem Content="{x:Static resx:ResUI.menuModeRule}" />
+                <ComboBoxItem Content="{x:Static resx:ResUI.menuModeGlobal}" />
+                <ComboBoxItem Content="{x:Static resx:ResUI.menuModeDirect}" />
             </ComboBox>
 
             <TextBlock
@@ -63,10 +61,10 @@
             </Button>
 
             <Button
-                x:Name="menuGroupProxiesDelaytest"
+                x:Name="menuProxiesDelaytest"
                 Margin="{StaticResource MarginLr8}"
                 Classes="IconButton Success"
-                ToolTip.Tip="{x:Static resx:ResUI.menuDelaytest}">
+                ToolTip.Tip="{x:Static resx:ResUI.menuProxiesDelaytest}">
                 <Button.Content>
                     <PathIcon Data="{StaticResource SemiIconBolt}" />
                 </Button.Content>
@@ -113,7 +111,7 @@
             <ListBox x:Name="lstProxyDetails" ItemsSource="{Binding ProxyDetails}">
                 <ItemsControl.ContextMenu>
                     <ContextMenu>
-                        <MenuItem x:Name="menuProxyDelaytest" Header="{x:Static resx:ResUI.menuDelaytest}" />
+                        <MenuItem x:Name="menuProxiesDelaytestPart" Header="{x:Static resx:ResUI.menuProxiesDelaytestPart}" />
                         <MenuItem
                             x:Name="menuProxiesSelectActivity"
                             Header="{x:Static resx:ResUI.menuProxiesSelectActivity}"

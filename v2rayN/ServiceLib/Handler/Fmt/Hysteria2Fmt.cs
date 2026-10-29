@@ -1,3 +1,5 @@
+using System.Collections.Specialized;
+
 namespace ServiceLib.Handler.Fmt;
 
 public class Hysteria2Fmt : BaseFmt
@@ -17,11 +19,7 @@ public class Hysteria2Fmt : BaseFmt
         }
 
         item.Address = url.IdnHost;
-        // The URI scheme makes the port optional and defaults it to 443. Uri.Port answers -1 for
-        // an unregistered scheme carrying no port, which ProfileItem.IsValid then rejects.
-        // Only -1 means "omitted": an explicit ":0" has to stay 0 and be rejected the way it
-        // always was, instead of being quietly redirected to a server the link never named.
-        item.Port = url.Port == -1 ? 443 : url.Port;
+        item.Port = url.Port;
         item.Remarks = url.GetComponents(UriComponents.Fragment, UriFormat.Unescaped);
         item.Password = Utils.UrlDecode(url.UserInfo);
 
@@ -170,21 +168,8 @@ public class Hysteria2Fmt : BaseFmt
         }
         if (item.CertSha.IsNullOrEmpty())
         {
-            var pinSHA256 = GetQueryDecoded(query, "pinSHA256");
-            item.CertSha = pinSHA256;
-            if (!pinSHA256.IsNullOrEmpty())
-            {
-                // NOTE:
-                // To accommodate Xray changes,
-                // some providers issue self-signed cert links with `insecure = false` and a certificate fingerprint,
-                // breaking interoperability between Xray, official Hysteria 2 client, and sing-box.
-                // Since this won't compromise the overall security model,
-                // `insecure = true` is automatically set when a fingerprint is detected,
-                // and the value is restored when generating configurations.
-                item.AllowInsecure = Global.StringTrue;
-            }
+            item.CertSha = GetQueryDecoded(query, "pinSHA256");
         }
-        item.EchConfigList = GetQueryDecoded(query, "ech");
         item.SetProtocolExtra(item.GetProtocolExtra() with
         {
             Ports = GetQueryDecoded(query, "mport"),
@@ -226,15 +211,6 @@ public class Hysteria2Fmt : BaseFmt
         {
             var sha = item.CertSha;
             dicQuery.Add("pinSHA256", Utils.UrlEncode(sha));
-        }
-        else if (!item.Cert.IsNullOrEmpty()
-            && CertPemManager.GetLeafCertSha256Thumbprint(item.Cert) is { Length: > 0 } thumbprint)
-        {
-            dicQuery.Add("pinSHA256", Utils.UrlEncode(thumbprint));
-        }
-        if (!item.EchConfigList.IsNullOrEmpty())
-        {
-            dicQuery.Add("ech", Utils.UrlEncode(item.EchConfigList));
         }
         var protocolExtraItem = item.GetProtocolExtra();
         var isGecko = !protocolExtraItem.GeckoMinPacketSize.IsNullOrEmpty() || !protocolExtraItem.GeckoMaxPacketSize.IsNullOrEmpty();

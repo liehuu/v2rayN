@@ -1,20 +1,18 @@
 namespace ServiceLib.Models.Dto;
 
-public class SemanticVersion : IEquatable<SemanticVersion>, IComparable
+public class SemanticVersion
 {
-    private readonly string? build;
     private readonly int major;
     private readonly int minor;
     private readonly int patch;
-    private readonly string? prerelease;
-    private readonly string raw;
+    private readonly string version;
 
     public SemanticVersion(int major, int minor, int patch)
     {
         this.major = major;
         this.minor = minor;
         this.patch = patch;
-        raw = $"{major}.{minor}.{patch}";
+        version = $"{major}.{minor}.{patch}";
     }
 
     public SemanticVersion(string? version)
@@ -26,41 +24,26 @@ public class SemanticVersion : IEquatable<SemanticVersion>, IComparable
                 major = 0;
                 minor = 0;
                 patch = 0;
-                raw = $"{major}.{minor}.{patch}";
                 return;
             }
-            raw = version;
+            this.version = version.RemovePrefix('v');
 
-            var span = version.StartsWith("v", StringComparison.OrdinalIgnoreCase)
-                ? version.AsSpan(1)
-                : version.AsSpan();
-            var plusIdx = span.IndexOf('+');
-            var metadataSpan = plusIdx >= 0 ? span[(plusIdx + 1)..] : [];
-            var leftOfPlus = plusIdx >= 0 ? span[..plusIdx] : span;
-            var dashIdx = leftOfPlus.IndexOf('-');
-            var versionSpan = dashIdx >= 0 ? leftOfPlus[..dashIdx] : leftOfPlus;
-            var preReleaseSpan = dashIdx >= 0 ? leftOfPlus[(dashIdx + 1)..] : [];
-
-            build = metadataSpan.Length > 0 ? metadataSpan.ToString() : null;
-            prerelease = preReleaseSpan.Length > 0 ? preReleaseSpan.ToString() : null;
-
-            var parts = versionSpan.ToString().Split('.');
-            switch (parts.Length)
+            var parts = this.version.Split('.');
+            if (parts.Length == 2)
             {
-                case 2:
-                    major = int.Parse(parts.First());
-                    minor = int.Parse(parts.Last());
-                    patch = 0;
-                    break;
-
-                case 3 or 4:
-                    major = int.Parse(parts[0]);
-                    minor = int.Parse(parts[1]);
-                    patch = int.Parse(parts[2]);
-                    break;
-
-                default:
-                    throw new ArgumentException("Invalid version string");
+                major = int.Parse(parts.First());
+                minor = int.Parse(parts.Last());
+                patch = 0;
+            }
+            else if (parts.Length is 3 or 4)
+            {
+                major = int.Parse(parts[0]);
+                minor = int.Parse(parts[1]);
+                patch = int.Parse(parts[2]);
+            }
+            else
+            {
+                throw new ArgumentException("Invalid version string");
             }
         }
         catch
@@ -68,186 +51,135 @@ public class SemanticVersion : IEquatable<SemanticVersion>, IComparable
             major = 0;
             minor = 0;
             patch = 0;
-            raw = $"{major}.{minor}.{patch}";
-        }
-    }
-
-    public bool Equals(SemanticVersion? other)
-    {
-        if (other is null)
-        {
-            return false;
-        }
-        if (ReferenceEquals(this, other))
-        {
-            return true;
-        }
-        return major == other.major && minor == other.minor && patch == other.patch && prerelease == other.prerelease;
-    }
-
-    public static bool TryParse(string? version, out SemanticVersion? result)
-    {
-        try
-        {
-            result = new SemanticVersion(version);
-            return true;
-        }
-        catch
-        {
-            result = null;
-            return false;
         }
     }
 
     public override bool Equals(object? obj)
     {
-        return obj is SemanticVersion other && Equals(other);
+        if (obj is SemanticVersion other)
+        {
+            return major == other.major && minor == other.minor && patch == other.patch;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(major, minor, patch, prerelease);
+        return major.GetHashCode() ^ minor.GetHashCode() ^ patch.GetHashCode();
     }
 
+    /// <summary>
+    /// Use ToVersionString(string? prefix) instead if possible.
+    /// </summary>
+    /// <returns>major.minor.patch</returns>
     public override string ToString()
     {
-        return raw;
+        return version;
     }
 
-    public string ToStandardVersionString(string? prefix = null)
+    public string ToVersionString(string? prefix = null)
     {
-        var sb = new StringBuilder();
-        if (!string.IsNullOrEmpty(prefix))
+        if (prefix == null)
         {
-            sb.Append(prefix);
+            return version;
         }
-        sb.Append($"{major}.{minor}.{patch}");
-        if (!string.IsNullOrEmpty(prerelease))
+        else
         {
-            sb.Append($"-{prerelease}");
+            return $"{prefix}{version}";
         }
-        if (!string.IsNullOrEmpty(build))
-        {
-            sb.Append($"+{build}");
-        }
-        return sb.ToString();
     }
 
-    public static bool operator <(SemanticVersion left, SemanticVersion right)
-    {
-        return left.CompareTo(right) < 0;
-    }
+    public static bool operator ==(SemanticVersion v1, SemanticVersion v2)
+    { return v1.Equals(v2); }
 
-    public static bool operator >(SemanticVersion left, SemanticVersion right)
-    {
-        return left.CompareTo(right) > 0;
-    }
+    public static bool operator !=(SemanticVersion v1, SemanticVersion v2)
+    { return !v1.Equals(v2); }
 
-    public static bool operator <=(SemanticVersion left, SemanticVersion right)
-    {
-        return left.CompareTo(right) <= 0;
-    }
+    public static bool operator >=(SemanticVersion v1, SemanticVersion v2)
+    { return v1.GreaterEquals(v2); }
 
-    public static bool operator >=(SemanticVersion left, SemanticVersion right)
-    {
-        return left.CompareTo(right) >= 0;
-    }
+    public static bool operator <=(SemanticVersion v1, SemanticVersion v2)
+    { return v1.LessEquals(v2); }
 
     #region Private
 
-    public int CompareTo(SemanticVersion other)
+    private bool GreaterEquals(SemanticVersion other)
     {
-        if (major != other.major)
+        if (major < other.major)
         {
-            return major.CompareTo(other.major);
+            return false;
         }
-        if (minor != other.minor)
+        else if (major > other.major)
         {
-            return minor.CompareTo(other.minor);
+            return true;
         }
-        if (patch != other.patch)
+        else
         {
-            return patch.CompareTo(other.patch);
-        }
-        return ComparePreRelease(prerelease, other.prerelease);
-    }
-
-    public int CompareTo(object? obj)
-    {
-        if (obj is null)
-        {
-            return 1;
-        }
-        if (obj is SemanticVersion other)
-        {
-            return CompareTo(other);
-        }
-        throw new ArgumentException("Object is not a SemanticVersion");
-    }
-
-    private static int ComparePreRelease(string? left, string? right)
-    {
-        if (string.IsNullOrEmpty(left) && string.IsNullOrEmpty(right))
-        {
-            return 0;
-        }
-        if (string.IsNullOrEmpty(left))
-        {
-            return 1;
-        }
-        if (string.IsNullOrEmpty(right))
-        {
-            return -1;
-        }
-
-        var leftSpan = left.AsSpan();
-        var rightSpan = right.AsSpan();
-        using var leftEnum = leftSpan.Split('.').GetEnumerator();
-        using var rightEnum = rightSpan.Split('.').GetEnumerator();
-
-        while (true)
-        {
-            var hasLeft = leftEnum.MoveNext();
-            var hasRight = rightEnum.MoveNext();
-
-            if (!hasLeft && !hasRight)
+            if (minor < other.minor)
             {
-                return 0;
+                return false;
             }
-            if (!hasLeft)
+            else if (minor > other.minor)
             {
-                return -1;
+                return true;
             }
-            if (!hasRight)
+            else
             {
-                return 1;
-            }
-
-            var leftSegment = leftSpan[leftEnum.Current];
-            var rightSegment = rightSpan[rightEnum.Current];
-
-            var segCmp = CompareSegment(leftSegment, rightSegment);
-            if (segCmp != 0)
-            {
-                return segCmp;
+                if (patch < other.patch)
+                {
+                    return false;
+                }
+                else if (patch > other.patch)
+                {
+                    return true;
+                }
+                else
+                {
+                    return true;
+                }
             }
         }
     }
 
-    private static int CompareSegment(ReadOnlySpan<char> left, ReadOnlySpan<char> right)
+    private bool LessEquals(SemanticVersion other)
     {
-        var leftIsNum = ulong.TryParse(left, out var leftNum);
-        var rightIsNum = ulong.TryParse(right, out var rightNum);
-
-        return (leftIsNum, rightIsNum) switch
+        if (major < other.major)
         {
-            (true, true) => leftNum.CompareTo(rightNum),
-
-            (false, true) => 1,
-            (true, false) => -1,
-
-            (false, false) => left.SequenceCompareTo(right),
-        };
+            return true;
+        }
+        else if (major > other.major)
+        {
+            return false;
+        }
+        else
+        {
+            if (minor < other.minor)
+            {
+                return true;
+            }
+            else if (minor > other.minor)
+            {
+                return false;
+            }
+            else
+            {
+                if (patch < other.patch)
+                {
+                    return true;
+                }
+                else if (patch > other.patch)
+                {
+                    return false;
+                }
+                else
+                {
+                    return true;
+                }
+            }
+        }
     }
 
     #endregion Private

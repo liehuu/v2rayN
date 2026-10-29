@@ -1,3 +1,4 @@
+using System.Collections.Specialized;
 using System.Security.Principal;
 using CliWrap;
 using CliWrap.Buffered;
@@ -200,9 +201,7 @@ public class Utils
         var parts = query[1..].Split('&', StringSplitOptions.RemoveEmptyEntries);
         foreach (var part in parts)
         {
-            // Split on the FIRST '=' only: RFC 3986 lists '=' among the sub-delimiters a query
-            // value may carry, so everything after the first one belongs to the value.
-            var keyValue = part.Split('=', 2);
+            var keyValue = part.Split('=');
             if (keyValue.Length != 2)
             {
                 continue;
@@ -501,31 +500,6 @@ public class Utils
         };
     }
 
-    public static List<(string, string)> ParseHeaders(string? headers)
-    {
-        var result = new List<(string, string)>();
-        if (headers.IsNullOrEmpty())
-        {
-            return result;
-        }
-        var lines = headers.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
-        foreach (var line in lines)
-        {
-            var parts = line.Split(new[] { ':' }, 2);
-            if (parts.Length != 2)
-            {
-                continue;
-            }
-            var key = parts[0].Trim();
-            var value = parts[1].Trim();
-            if (!string.IsNullOrEmpty(key))
-            {
-                result.Add((key, value));
-            }
-        }
-        return result;
-    }
-
     #endregion Conversion Functions
 
     #region Data Checks
@@ -751,40 +725,6 @@ public class Utils
         return false;
     }
 
-    /// <summary>
-    /// Regex match with a timeout guard. Filter patterns can come from user
-    /// input or subscription content while the tested text (remarks, log
-    /// messages) is attacker-influenced, so an evil pattern like (a+)+$
-    /// would otherwise hang the caller (ReDoS). On timeout or invalid
-    /// pattern, fail open (return true) so no node/message is silently
-    /// dropped; the incident is logged.
-    /// </summary>
-    public static bool IsRegexMatch(string? input, string? pattern, int timeoutSeconds = 2)
-    {
-        if (pattern.IsNullOrEmpty())
-        {
-            return true;
-        }
-        if (input.IsNullOrEmpty())
-        {
-            return false;
-        }
-        try
-        {
-            return Regex.IsMatch(input, pattern, RegexOptions.None, TimeSpan.FromSeconds(timeoutSeconds));
-        }
-        catch (RegexMatchTimeoutException ex)
-        {
-            Logging.SaveLog("IsRegexMatch timeout", ex);
-            return true;
-        }
-        catch (ArgumentException ex)
-        {
-            Logging.SaveLog("IsRegexMatch invalid pattern", ex);
-            return true;
-        }
-    }
-
     #endregion Data Checks
 
     #region Speed Test
@@ -872,40 +812,6 @@ public class Utils
     {
         return NetworkInterface.GetAllNetworkInterfaces()
             .Any(ni => ni.Name.Equals(inInterfaceName, StringComparison.OrdinalIgnoreCase));
-    }
-
-    /// <summary>
-    /// Whether the host holds a globally routable IPv6 address, that is one inside 2000::/3.
-    /// Link-local and unique local addresses are excluded: they never reach the IPv6 internet,
-    /// so a host holding only those has no IPv6 traffic that could bypass the tunnel, and no
-    /// IPv6 path that traffic sent into the tunnel could come back out of.
-    /// </summary>
-    public static bool HasGlobalIPv6Address()
-    {
-        try
-        {
-            return NetworkInterface.GetAllNetworkInterfaces()
-                .Where(ni => ni.OperationalStatus == OperationalStatus.Up
-                             && ni.NetworkInterfaceType != NetworkInterfaceType.Loopback)
-                .SelectMany(ni => ni.GetIPProperties().UnicastAddresses)
-                .Any(ua => IsGlobalUnicastIPv6(ua.Address));
-        }
-        catch
-        {
-            return true;
-        }
-    }
-
-    private static bool IsGlobalUnicastIPv6(IPAddress address)
-    {
-        if (address.AddressFamily != AddressFamily.InterNetworkV6)
-        {
-            return false;
-        }
-
-        // 2000::/3 is the only range currently assigned for global unicast, which leaves out
-        // ::1, fe80::/10, fc00::/7 and ff00::/8 in a single test.
-        return (address.GetAddressBytes()[0] & 0xE0) == 0x20;
     }
 
     #endregion Speed Test
@@ -1077,12 +983,12 @@ public class Utils
         return new Dictionary<string, string>();
     }
 
-    public static async Task<string?> GetCliWrapOutput(string filePath, string? arg, CancellationToken cancellationToken = default)
+    public static async Task<string?> GetCliWrapOutput(string filePath, string? arg)
     {
-        return await GetCliWrapOutput(filePath, arg != null ? new List<string>() { arg } : null, cancellationToken);
+        return await GetCliWrapOutput(filePath, arg != null ? new List<string>() { arg } : null);
     }
 
-    public static async Task<string?> GetCliWrapOutput(string filePath, IEnumerable<string>? args, CancellationToken cancellationToken = default)
+    public static async Task<string?> GetCliWrapOutput(string filePath, IEnumerable<string>? args)
     {
         try
         {
@@ -1099,7 +1005,7 @@ public class Utils
                 }
             }
 
-            var result = await cmd.ExecuteBufferedAsync(cancellationToken);
+            var result = await cmd.ExecuteBufferedAsync();
             if (result.IsSuccess)
             {
                 return result.StandardOutput ?? "";
@@ -1441,11 +1347,7 @@ public class Utils
             if (File.Exists(fileName))
             {
                 var currentMode = File.GetUnixFileMode(fileName);
-                var executableMode = currentMode | UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute;
-                if (currentMode != executableMode)
-                {
-                    File.SetUnixFileMode(fileName, executableMode);
-                }
+                File.SetUnixFileMode(fileName, currentMode | UnixFileMode.UserExecute | UnixFileMode.GroupExecute | UnixFileMode.OtherExecute);
                 return true;
             }
         }

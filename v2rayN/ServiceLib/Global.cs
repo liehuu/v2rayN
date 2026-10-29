@@ -92,27 +92,16 @@ public class Global
     public const string XrayLocalAsset = "XRAY_LOCATION_ASSET";
     public const string XrayLocalCert = "XRAY_LOCATION_CERT";
     public const int SpeedTestPageSize = 1000;
-    public const int SpeedTestConcurrencyCountMin = 10;
     public const string LinuxBash = "/bin/bash";
     public const string StringTrue = "true";
     public const string StringFalse = "false";
     public const int SqliteMaxBatchSize = 10000;
-    public static readonly TimeSpan LocalFetch = TimeSpan.FromSeconds(5);
-    public static readonly TimeSpan DirectFetch = TimeSpan.FromSeconds(10);
-    public static readonly TimeSpan ProxyFetch = TimeSpan.FromSeconds(30);
-    public static readonly TimeSpan DirectDownloadConnect = TimeSpan.FromSeconds(5);
-    public static readonly TimeSpan ProxyDownloadConnect = TimeSpan.FromSeconds(10);
 
-    public const string SingboxDirectDNSTagPrefix = "direct-dns-";
-    public const string SingboxRemoteDNSTagPrefix = "remote-dns-";
-    public const string SingboxDirectDNSTag = "direct-dns-1";
-    public const string SingboxRemoteDNSTag = "remote-dns-1";
-    public const string SingboxDirectDNSTagTemplate = "direct-dns-{0}";
-    public const string SingboxRemoteDNSTagTemplate = "remote-dns-{0}";
-    public const string SingboxLocalDNSTag = "local-local";
-    public const string SingboxHostsDNSTag = "hosts-dns";
-    public const string SingboxFakeDNSTag = "fake-dns";
-    public const string SingboxSrsDownloadHttpClientTag = "srs-download-http-client";
+    public const string SingboxDirectDNSTag = "direct_dns";
+    public const string SingboxRemoteDNSTag = "remote_dns";
+    public const string SingboxLocalDNSTag = "local_local";
+    public const string SingboxHostsDNSTag = "hosts_dns";
+    public const string SingboxFakeDNSTag = "fake_dns";
 
     public const int Hysteria2DefaultHopInt = 30;
     public const string PolicyGroupExcludeKeywords = @"剩余|过期|到期|重置|[Rr]emaining|[Ee]xpir|[Rr]eset";
@@ -261,8 +250,7 @@ public class Global
         { EConfigType.TUIC, "tuic" },
         { EConfigType.WireGuard, "wireguard" },
         { EConfigType.Anytls, "anytls" },
-        { EConfigType.Naive, "naive" },
-        { EConfigType.MASQUE, "masque" },
+        { EConfigType.Naive, "naive" }
     };
 
     public static readonly List<string> VmessSecurities =
@@ -372,7 +360,6 @@ public class Global
         EConfigType.Trojan,
         EConfigType.Hysteria2,
         EConfigType.WireGuard,
-        EConfigType.MASQUE,
         EConfigType.SOCKS,
         EConfigType.HTTP,
     ];
@@ -388,7 +375,6 @@ public class Global
         EConfigType.Anytls,
         EConfigType.Naive,
         EConfigType.WireGuard,
-        EConfigType.MASQUE,
         EConfigType.SOCKS,
         EConfigType.HTTP,
     ];
@@ -498,22 +484,16 @@ public class Global
         "localhost"
     ];
 
-    public static readonly List<LanguageOption> LanguageOptions =
-    [
-        new("zh-Hans", "简体中文"),
-        new("zh-Hant", "繁體中文"),
-        new("en", "English"),
-        new("fa", "فارسی"),
-        new("fr", "Français"),
-        new("ru", "Русский"),
-        new("hu", "Magyar"),
-        new("id", "Bahasa Indonesia"),
-        new("az", "Azərbaycan dili")
-    ];
-
     public static readonly List<string> Languages =
     [
-        .. LanguageOptions.Select(t => t.Value)
+        "zh-Hans",
+        "zh-Hant",
+        "en",
+        "fa",
+        "fr",
+        "ru",
+        "hu",
+        "id"
     ];
 
     public static readonly List<string> Alpns =
@@ -656,10 +636,10 @@ public class Global
         { ECoreType.Xray, "XTLS/Xray-core" },
         { ECoreType.sing_box, "SagerNet/sing-box" },
         { ECoreType.mihomo, "MetaCubeX/mihomo" },
-        { ECoreType.hysteria, "HyNetworks/hysteria" },
-        { ECoreType.hysteria2, "HyNetworks/hysteria" },
+        { ECoreType.hysteria, "apernet/hysteria" },
+        { ECoreType.hysteria2, "apernet/hysteria" },
         { ECoreType.naiveproxy, "klzgrad/naiveproxy" },
-        { ECoreType.tuic, "tuic-protocol/tuic" },
+        { ECoreType.tuic, "EAimTY/tuic" },
         { ECoreType.juicity, "juicity/juicity" },
         { ECoreType.brook, "txthinking/brook" },
         { ECoreType.overtls, "ShadowsocksR-Live/overtls" },

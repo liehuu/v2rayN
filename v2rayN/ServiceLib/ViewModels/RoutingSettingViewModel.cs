@@ -61,10 +61,10 @@ public partial class RoutingSettingViewModel : MyReactiveObject
             x => x.DomainStrategy4Singbox)
             .Skip(1)
             .DistinctUntilChanged()
-            .SubscribeAsync(async x =>
+            .Subscribe(x =>
             {
                 IsModified = true;
-                await SaveSettingsAsync();
+                _ = SaveSettingsAsync();
             });
     }
 
@@ -83,6 +83,7 @@ public partial class RoutingSettingViewModel : MyReactiveObject
 
     public async Task RefreshRoutingItems()
     {
+        RoutingItems.Clear();
         var models = new List<RoutingItemModel>();
 
         var routings = await AppManager.Instance.RoutingItems();
@@ -101,7 +102,7 @@ public partial class RoutingSettingViewModel : MyReactiveObject
             };
             models.Add(it);
         }
-        RoutingItems.ReplaceRange(models);
+        RoutingItems.AddRange(models);
     }
 
     /// <summary>
@@ -146,7 +147,7 @@ public partial class RoutingSettingViewModel : MyReactiveObject
             NoticeManager.Instance.Enqueue(ResUI.PleaseSelectRules);
             return;
         }
-        if (await ShowYesNoInteraction.HandleSafe(ResUI.RemoveServer) == false)
+        if (await ShowYesNoInteraction.Handle(ResUI.RemoveServer) == false)
         {
             return;
         }

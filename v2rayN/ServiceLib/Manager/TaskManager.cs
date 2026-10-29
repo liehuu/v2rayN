@@ -19,10 +19,12 @@ public class TaskManager
     {
         Logging.SaveLog("Setup Scheduled Tasks");
 
-        using var timer = new PeriodicTimer(TimeSpan.FromMinutes(1));
         var numOfExecuted = 1;
-        while (await timer.WaitForNextTickAsync().ConfigureAwait(false))
+        while (true)
         {
+            //1 minute
+            await Task.Delay(1000 * 60);
+
             //Execute once 1 minute
             try
             {
@@ -55,8 +57,8 @@ public class TaskManager
                 //Logging.SaveLog("Execute delete expired files");
 
                 FileUtils.DeleteExpiredFiles(Utils.GetBinConfigPath(), DateTime.Now.AddHours(-1), "Test");
-                FileUtils.DeleteExpiredFiles(Utils.GetLogPath(), DateTime.Now.AddDays(-7));
-                FileUtils.DeleteExpiredFiles(Utils.GetTempPath(), DateTime.Now.AddDays(-7));
+                FileUtils.DeleteExpiredFiles(Utils.GetLogPath(), DateTime.Now.AddMonths(-1));
+                FileUtils.DeleteExpiredFiles(Utils.GetTempPath(), DateTime.Now.AddMonths(-1));
 
                 try
                 {
@@ -134,7 +136,7 @@ public class TaskManager
 
         var updateService = new UpdateService(_config, async (success, msg) => await Task.CompletedTask);
 
-        var msgs = await updateService.CheckHasUpdateOnlyAll(_config.CheckUpdateItem.UpdateViaProxy);
+        var msgs = await updateService.CheckHasUpdateOnlyAll(_config.CheckUpdateItem.CheckPreReleaseUpdate);
         foreach (var msg in msgs)
         {
             await _updateFunc?.Invoke(false, msg);

@@ -218,7 +218,8 @@ public partial class AddGroupServerViewModel : MyReactiveObject, ICloseable
 
     public async Task UpdatePreviewList()
     {
-        AllProfilePreviewItemsObs.ReplaceRange(await GroupProfileManager.GetChildProfileItemsByProtocolExtra(GetUpdatedProtocolExtra()));
+        AllProfilePreviewItemsObs.Clear();
+        AllProfilePreviewItemsObs.AddRange(await GroupProfileManager.GetChildProfileItemsByProtocolExtra(GetUpdatedProtocolExtra()));
     }
 
     private async Task SaveServerAsync()

@@ -72,6 +72,17 @@
                             IsVisible="{Binding BlSystemProxyPacVisible}"
                             ToggleType="Radio" />
                         <NativeMenuItemSeparator />
+                        <NativeMenuItem
+                            Command="{Binding RoutingBypassMainlandCmd}"
+                            Header="{x:Static resx:ResUI.menuRoutingBypassMainland}"
+                            IsChecked="{Binding BlRoutingBypassMainland}"
+                            ToggleType="Radio" />
+                        <NativeMenuItem
+                            Command="{Binding RoutingGlobalCmd}"
+                            Header="{x:Static resx:ResUI.menuRoutingGlobal}"
+                            IsChecked="{Binding BlRoutingGlobal}"
+                            ToggleType="Radio" />
+                        <NativeMenuItemSeparator />
                         <NativeMenuItem Click="MenuAddServerViaClipboardClick" Header="{x:Static resx:ResUI.menuAddServerViaClipboard}" />
                         <NativeMenuItem Command="{Binding SubUpdateCmd}" Header="{x:Static resx:ResUI.menuSubUpdate}" />
                         <NativeMenuItem Command="{Binding SubUpdateViaProxyCmd}" Header="{x:Static resx:ResUI.menuSubUpdateViaProxy}" />
